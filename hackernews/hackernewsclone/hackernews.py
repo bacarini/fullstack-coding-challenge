@@ -66,7 +66,6 @@ def trans_title(obj, lang):
 from worker import celery
 import celery.states as states
 
-
 @app.route('/check/<string:id>')
 def check_task(id):
     res = celery.AsyncResult(id)
