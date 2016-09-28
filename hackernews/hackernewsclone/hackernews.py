@@ -1,0 +1,86 @@
+# -*- coding: utf-8 -*-
+import time
+import os
+from flask import Flask, render_template, url_for
+from pymongo import MongoClient
+from settings import UNBABEL_API_LANGUAGES
+
+app = Flask(__name__)
+mongo_host = os.getenv('MONGO_HOST') or '127.0.0.1'
+mongo_client = MongoClient(host=mongo_host)
+
+db = mongo_client.hackernewsclone
+
+@app.route('/')
+@app.route('/<lang>')
+def index(lang='en'):
+    languages = UNBABEL_API_LANGUAGES
+    stories = db.stories.find({})
+    return render_template('index.html', stories=stories, languages=languages, lang=lang)
+
+
+@app.route('/<lang>/comments/<int:story_id>')
+def comments(story_id, lang='en'):
+    story = db.stories.find_one({"id": story_id})
+    return render_template('comments.html', story=story, lang=lang)
+
+
+@app.route('/dashboard')
+def dashboard():
+    stories = db.stories.find()
+    return render_template('dashboard.html', stories=stories)
+
+
+@app.route('/fill')
+def fill():
+    task = celery.send_task('hackernews.update_topstories', args=[], kwargs={})
+    return "<a href='{url}'>check status of {id} </a>".format(id=task.id,
+                                                              url=url_for('check_task', id=task.id, _external=True))
+
+@app.route('/clear')
+def clear():
+    stories = db.stories
+    stories.delete_many({})
+    return "OK"
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
+@app.template_filter('ctime')
+def timectime(s):
+    return time.ctime(s)
+
+
+@app.template_filter('trans_title')
+def trans_title(obj, lang):
+    if lang == 'en':
+        return obj.get("title")
+    title = obj.get("title_"+lang)
+    return title or "{} <small>(not translated)</small>".format(obj.get("title"))
+
+
+# TEST CELERY
+from worker import celery
+import celery.states as states
+
+
+@app.route('/check/<string:id>')
+def check_task(id):
+    res = celery.AsyncResult(id)
+    if res.state==states.PENDING:
+        return res.state
+    else:
+        return str(res.result)
+
+
+@app.route('/get_translations')
+def get_translations():
+    task = celery.send_task('unbabel.get_unbabel_translation', args=[], kwargs={})
+    return "<a href='{url}'>check status of {id} </a>".format(id=task.id,
+                url=url_for('check_task',id=task.id,_external=True))
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')

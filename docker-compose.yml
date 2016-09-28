@@ -1,0 +1,43 @@
+version: '2'
+services:
+  mongo:
+    image: mongo
+    # volumes:
+    #   - ./mongodata:/data/db
+  redis:
+    image: redis
+  celery:
+    build: .
+    environment:
+      - MONGO_HOST=mongo
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - C_FORCE_ROOT=true
+    command: celery -A tasks worker -B --loglevel=info
+    volumes:
+      - ./hackernews/hackernewsclone:/hackernewsclone
+    depends_on:
+      - redis
+  hackernewsclone:
+    build: .
+    command: python hackernews.py
+    volumes:
+      - ./hackernews/hackernewsclone:/hackernewsclone
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_HOST=mongo
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - mongo
+      - redis
+      - celery
+  monitor:
+    build: .
+    ports:
+      - "5555:5555"
+    #entrypoint: flower
+    command: flower -A tasks --port=5555 --broker=redis://redis:6379/0
+    depends_on:
+      - redis

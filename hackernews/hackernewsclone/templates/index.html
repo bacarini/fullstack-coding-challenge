@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %} - Home{% endblock %}
+
+{% block navbar_main %}
+        <ul class="nav navbar-nav navbar-left ">
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        </ul>
+    {% if languages %}
+        <ul class="nav navbar-nav navbar-right ">
+        {% for sigla, name in languages %}
+            <li><a href="{{ url_for('index', lang=sigla) }}">{{ sigla }}</a></li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>Top Stories</h1>
+    </div>
+    <div class="list-group">
+        {% if stories %}
+            {% for story in stories %}
+                <div class="list-group-item">
+                    <a href="{{ story.url }}"><h4 class="list-group-item-heading">{{ "%02d" | format(loop.index) }}
+                        - {{ story | trans_title(lang) | safe }} </h4></a>
+                    <div class="list-group-item-text text-info">
+                        <ul class="list-inline">
+                            <li><i class="glyphicon glyphicon-thumbs-up"></i> {{ story.score }}</li>
+                            <li><i class="glyphicon glyphicon-user"></i> {{ story.by }}</li>
+                            <li><i class="glyphicon glyphicon-time"></i> {{ story.time | ctime }}</li>
+                            <li><a href="{{ url_for('comments', lang=lang, story_id=story.id) }}"><i
+                                    class="glyphicon glyphicon-comment"></i> Comments {{ story.kids | count }}</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+            {% endfor %}
+        {% else %}
+            <ul class="list-group">
+                <li class="list-group-item">No stories at this momment.</li>
+            </ul>
+        {% endif %}
+    </div>
+{% endblock %}

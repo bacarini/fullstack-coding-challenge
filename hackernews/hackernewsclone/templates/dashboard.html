@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %} - Home{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>Dashboard
+            <small>Status of Unbabel Translations.</small>
+        </h1>
+    </div>
+    {% if stories.retrivied %}
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Unbable Uid</th>
+                <th>Unbabel Status</th>
+            </tr>
+            </thead>
+            {% for story in stories %}
+            <tr>
+                <td>{{ story.id }}</td>
+                <td>{{ story.title }}</td>
+                <td>{{ story.unbabel_uid }}</td>
+                <td>{{ story.unbabel_status }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <ul class="list-group">
+            {% for story in stories %}
+                <li class="list-group-item">{{ "%02d" | format(loop.index) }} - {{ story.title }} |
+                    UID:{{ story.unbabel_uid }} </li>
+
+            {% endfor %}
+        </ul>
+    {% else %}
+        <ul class="list-group">
+            <li class="list-group-item">No stories at this momment.</li>
+        </ul>
+    {% endif %}
+{% endblock %}
