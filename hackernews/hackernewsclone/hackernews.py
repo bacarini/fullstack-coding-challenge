@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import time
 import os
+from worker import celery
+import celery.states as states
 from flask import Flask, render_template, url_for
 from pymongo import MongoClient
 from settings import UNBABEL_API_LANGUAGES
@@ -10,6 +12,7 @@ mongo_host = os.getenv('MONGO_HOST') or '127.0.0.1'
 mongo_client = MongoClient(host=mongo_host)
 
 db = mongo_client.hackernewsclone
+
 
 @app.route('/')
 @app.route('/<lang>')
@@ -37,6 +40,7 @@ def fill():
     return "<a href='{url}'>check status of {id} </a>".format(id=task.id,
                                                               url=url_for('check_task', id=task.id, _external=True))
 
+
 @app.route('/clear')
 def clear():
     stories = db.stories
@@ -59,17 +63,13 @@ def trans_title(obj, lang):
     if lang == 'en':
         return obj.get("title")
     title = obj.get("title_"+lang)
-    return title or "{} <small>(not translated)</small>".format(obj.get("title"))
+    return title or u"{} <small>(not translated)</small>".format(obj.get("title"))
 
 
-# TEST CELERY
-from worker import celery
-import celery.states as states
-
-@app.route('/check/<string:id>')
-def check_task(id):
-    res = celery.AsyncResult(id)
-    if res.state==states.PENDING:
+@app.route('/check/<string:obj_id>')
+def check_task(obj_id):
+    res = celery.AsyncResult(obj_id)
+    if res.state == states.PENDING:
         return res.state
     else:
         return str(res.result)
@@ -78,8 +78,8 @@ def check_task(id):
 @app.route('/get_translations')
 def get_translations():
     task = celery.send_task('unbabel.get_unbabel_translation', args=[], kwargs={})
-    return "<a href='{url}'>check status of {id} </a>".format(id=task.id,
-                url=url_for('check_task',id=task.id,_external=True))
+    return "<a href='{url}'>check status of {id} </a>".format(id=task.id, url=url_for('check_task', id=task.id,
+                                                                                      _external=True))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
