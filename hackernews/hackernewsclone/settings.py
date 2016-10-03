@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
-UNBABEL_API_USERNAME = "gtv.almeida"
-UNBABEL_API_KEY = "63215095a2bef30abea459ef841c681000c5d28d"
+import ConfigParser
+from os.path import expanduser, join
+home = expanduser("~")
+
+config = ConfigParser.ConfigParser()
+config.readfp(open(join(home, '.unbabel')))
+UNBABEL_API_USERNAME = config.get('Sandbox', 'username')
+UNBABEL_API_KEY = config.get('Sandbox', 'key')
 
 UNBABEL_API_LANGUAGES = (
     ('en', u"English"),
