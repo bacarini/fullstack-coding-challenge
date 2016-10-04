@@ -38,7 +38,6 @@ It's very easy to use. And do the job very well.
 
 To run celery
     cd ./fullstack-coding-challenge
-    celery -A tasks worker -B --loglevel=info
     source run_celery.sh
 
 
@@ -49,10 +48,15 @@ for to see what is happening with celery workers.
 
 To run flower
     cd ./fullstack-coding-challenge
-    flower -A tasks --port=5555 --broker=redis://
     source run_celery.sh
 
 To access Flower Monitor, put your prowser on http://127.0.0.1:5555/
+
+## To Do
+
+1. Put translations in separate collection
+2. Improve performance for comments and translations
+3. Show nested comments
 
 
 

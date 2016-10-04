@@ -77,14 +77,15 @@ def post_unbabel_translation(item_id):
             if resp.status_code == 202:
                 data = resp.json()
                 for object in data.get('objects', []):
-                    db.stories.update_one({"_id": item.get('_id')}, {"$set": {"unbabel_uid": object.get('uid')}})
+                    db.stories.update_one({"_id": item.get('_id')},
+                                          {"$set": {"unbabel_uid_{}".format(lang): object.get('uid')}})
                     response.append([resp.content, resp.json()])
         return response
     return "Item not found {}".format(item_id)
 
 
 @celery.task(name='unbabel.get_unbabel_translations')
-def get_unbabel_translation(uid, field_name):
+def get_unbabel_translation(uid, lang):
     """
     Make a request to Unbabel api to retrieve a translation detail.
     :return:
@@ -93,9 +94,9 @@ def get_unbabel_translation(uid, field_name):
     resp = do_request('GET', url, headers=UNBABEL_HEADERS)
     data = resp.json()
 
-    update_data = {"$set": {"unbabel_status": data.get('status')}}
+    update_data = {"$set": {"unbabel_status_{}".format(lang): data.get('status')}}
     if "completed" == data.get('status'):
-        update_data.update({"$set": {field_name: data.get('translatedText')}})
+        update_data.update({"$set": {"title_{}".format(lang): data.get('translatedText')}})
     db.stories.update_one({"id": uid}, update_data)
     return [{"id": uid}, update_data]
 
@@ -108,13 +109,11 @@ def handler_unbabel_translations():
     :return:
     """
     jobs = []
-    for lang in [l[0] for l in UNBABEL_API_LANGUAGES if l[0] != 'en']:
-        field_name = "title_{}".format(lang)
-        items = db.stories.find({field_name: {"$exists": False}})
-        for item in items:
-            uid = item.get('unbabel_uid', None)
+    for item in db.stories.find({}):
+        for lang in [l[0] for l in UNBABEL_API_LANGUAGES if l[0] != 'en']:
+            uid = item.get('unbabel_uid_{}'.format(lang), None)
             if uid:
-                jobs.append(get_unbabel_translation.s(uid, field_name))
+                jobs.append(get_unbabel_translation.s(uid, lang))
     job = group(jobs)
     job.apply_async()
     return job
