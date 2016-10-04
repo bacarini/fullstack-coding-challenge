@@ -49,7 +49,10 @@ def do_request(method, url, data=None, headers=None):
             resp = requests.get(url, headers=headers)
             return resp
         elif method == 'POST':
-            resp = requests.post(url, data=data, headers=headers)
+            resp = requests.post(url, json=data, headers=headers)
+            return resp
+        elif method == 'PATCH':
+            resp = requests.patch(url, json=data, headers=headers)
             return resp
     except Exception, e:
         print "Retry {} with {}, {}".format(str(e), url, data)
@@ -69,11 +72,13 @@ def post_unbabel_translation(item_id):
         for lang in [l[0] for l in UNBABEL_API_LANGUAGES if l[0] != 'en']:
             objects.append({"text": item.get('title'),  "target_language": lang, "text_format": "text"})
             data = {"objects": objects}
-            resp = do_request('POST', "http://sandbox.unbabel.com/tapi/v2/translation/", data=data,
+            resp = do_request('PATCH', "http://sandbox.unbabel.com/tapi/v2/translation/", data=data,
                               headers=UNBABEL_HEADERS)
-            if resp:
-                db.stories.update_one({"_id": item.get('_id')}, {"$set": {"unbabel_uid": resp.json().get('uid')}})
-                response.append([resp.content, resp.json()])
+            if resp.status_code == 202:
+                data = resp.json()
+                for object in data.get('objects', []):
+                    db.stories.update_one({"_id": item.get('_id')}, {"$set": {"unbabel_uid": object.get('uid')}})
+                    response.append([resp.content, resp.json()])
         return response
     return "Item not found {}".format(item_id)
 
@@ -87,14 +92,15 @@ def get_unbabel_translation(uid, field_name):
     url = "http://sandbox.unbabel.com/tapi/v2/translation/{}/".format(uid)
     resp = do_request('GET', url, headers=UNBABEL_HEADERS)
     data = resp.json()
+
     update_data = {"$set": {"unbabel_status": data.get('status')}}
     if "completed" == data.get('status'):
         update_data.update({"$set": {field_name: data.get('translatedText')}})
-    db.stories.update_one({"id": uid[2:]}, update_data)
+    db.stories.update_one({"id": uid}, update_data)
     return [{"id": uid}, update_data]
 
 
-#@periodic_task(run_every=crontab(minute='*/1'))
+@periodic_task(run_every=crontab(minute='*/1'))
 @celery.task(name='unbabel.handler_unbabel_translations')
 def handler_unbabel_translations():
     """
@@ -106,8 +112,9 @@ def handler_unbabel_translations():
         field_name = "title_{}".format(lang)
         items = db.stories.find({field_name: {"$exists": False}})
         for item in items:
-            uid = "{}{}".format(lang, item.get('id'))
-            jobs.append(get_unbabel_translation.s(uid, field_name))
+            uid = item.get('unbabel_uid', None)
+            if uid:
+                jobs.append(get_unbabel_translation.s(uid, field_name))
     job = group(jobs)
     job.apply_async()
     return job
