@@ -12,18 +12,19 @@
             <tr>
                 <th>Id</th>
                 <th>Title</th>
-                <th>Unbable Uid</th>
-                <th>Unbabel Status</th>
+                <th>Unbable Uid/Status</th>
             </tr>
             </thead>
             {% for story in stories %}
             <tr>
                 <td>{{ story.id }}</td>
                 <td>{{ story.title }}</td>
-                <td>{{ story.unbabel_uid_fr }}<br>
-                {{ story.unbabel_uid_pt }}</td>
-                <td>{{ story.unbabel_status_fr }}<br>
-                {{ story.unbabel_status_pt }}</td>
+                <td>
+                        {% for sigla, name in languages %}
+                            {{ sigla }}: {{ story | trans_status(sigla) }}<br>
+                        {% endfor %}
+
+                </td>
             </tr>
             {% endfor %}
         </table>

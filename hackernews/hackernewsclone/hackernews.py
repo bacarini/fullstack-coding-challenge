@@ -30,8 +30,9 @@ def comments(story_id, lang='en'):
 
 @app.route('/dashboard')
 def dashboard():
+    languages = UNBABEL_API_LANGUAGES[1:]
     stories = db.stories.find()
-    return render_template('dashboard.html', stories=stories)
+    return render_template('dashboard.html', stories=stories, languages=languages)
 
 
 @app.route('/fill')
@@ -64,6 +65,15 @@ def trans_title(obj, lang):
         return obj.get("title")
     title = obj.get("title_"+lang)
     return title or u"{} <small>(not translated)</small>".format(obj.get("title"))
+
+
+@app.template_filter('trans_status')
+def trans_status(obj, lang):
+    uid = obj.get('unbabel_uid_{}'.format(lang.lower()))
+    status = obj.get('unbabel_status_{}'.format(lang.lower()))
+    if status:
+        status = "/{}".format(status)
+    return "{}{}".format(uid, status)
 
 
 @app.route('/check/<string:obj_id>')
