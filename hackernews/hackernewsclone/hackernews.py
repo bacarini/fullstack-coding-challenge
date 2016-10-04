@@ -4,7 +4,7 @@ import os
 from worker import celery
 import celery.states as states
 from flask import Flask, render_template, url_for
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 from settings import UNBABEL_API_LANGUAGES
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ db = mongo_client.hackernewsclone
 @app.route('/<lang>')
 def index(lang='en'):
     languages = UNBABEL_API_LANGUAGES
-    stories = db.stories.find({})
+    stories = db.stories.find({}).sort("score", DESCENDING)
     return render_template('index.html', stories=stories, languages=languages, lang=lang)
 
 
@@ -37,7 +37,7 @@ def dashboard():
 @app.route('/fill')
 def fill():
     task = celery.send_task('hackernews.update_topstories', args=[], kwargs={})
-    return "<a href='{url}'>check status of {id} </a>".format(id=task.id,
+    return "<a href='{url}'>check status of {id} </a>".format(obj_id=task.id,
                                                               url=url_for('check_task', id=task.id, _external=True))
 
 

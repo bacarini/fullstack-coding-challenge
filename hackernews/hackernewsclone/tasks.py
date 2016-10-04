@@ -93,12 +93,12 @@ def get_unbabel_translation(uid, lang):
     url = "http://sandbox.unbabel.com/tapi/v2/translation/{}/".format(uid)
     resp = do_request('GET', url, headers=UNBABEL_HEADERS)
     data = resp.json()
-
-    update_data = {"$set": {"unbabel_status_{}".format(lang): data.get('status')}}
+    db.stories.update_one({"unbabel_uid_{}".format(lang): uid},
+                          {"$set": {"unbabel_status_{}".format(lang): data.get('status')}})
     if "completed" == data.get('status'):
-        update_data.update({"$set": {"title_{}".format(lang): data.get('translatedText')}})
-    db.stories.update_one({"id": uid}, update_data)
-    return [{"id": uid}, update_data]
+        db.stories.update_one({"unbabel_uid_{}".format(lang): uid},
+                              {"$set": {"title_{}".format(lang): data.get('translatedText')}})
+    return [{"unbabel_uid_{}".format(lang): uid, "status": data.get('status')}]
 
 
 @periodic_task(run_every=crontab(minute='*/1'))
