@@ -19,7 +19,7 @@
         <h1>Top Stories</h1>
     </div>
     <div class="list-group">
-        {% if stories %}
+        {% if stories.first %}
             {% for story in stories %}
                 <div class="list-group-item">
                     <a href="{{ story.url }}"><h4 class="list-group-item-heading">{{ "%02d" | format(loop.index) }}
