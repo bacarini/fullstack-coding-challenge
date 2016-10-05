@@ -52,6 +52,20 @@ To run flower
 
 To access Flower Monitor, put your prowser on http://127.0.0.1:5555/
 
+
+## Testing
+
+Run the tests by using this code
+    
+    git clone git@github.com:gustavoalmeida/fullstack-coding-challenge.git
+    cd ./fullstack-coding-challenge/hackernews/hackernewsclone
+    virtualenv .venv
+    source ./venv/bin/activate
+    pip install -r requirements.txt
+    pytest
+    
+
+
 ## To Do
 
 1. Put translations in separate collection
