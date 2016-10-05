@@ -5,8 +5,8 @@ home = expanduser("~")
 
 config = ConfigParser.ConfigParser()
 config.readfp(open(join(home, '.unbabel')))
-UNBABEL_API_USERNAME = config.get('Sandbox', 'username')
-UNBABEL_API_KEY = config.get('Sandbox', 'key')
+UNBABEL_API_USERNAME = config.get('Sandbox', 'UNBABEL_API_USERNAME')
+UNBABEL_API_KEY = config.get('Sandbox', 'UNBABEL_API_KEY')
 
 UNBABEL_API_LANGUAGES = (
     ('en', u"English"),
