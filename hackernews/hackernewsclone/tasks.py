@@ -9,7 +9,8 @@ from requests import exceptions as requests_exceptions
 from celery import Celery, chain, group
 from retrying import retry
 from httplib import BadStatusLine
-from settings import HACKERNEWS_API_TOPSTORIES, HACKERNEWS_API_ITEM, UNBABEL_API_LANGUAGES
+from settings import (HACKERNEWS_API_TOPSTORIES, HACKERNEWS_API_ITEM, UNBABEL_API_LANGUAGES,
+                      UNBABEL_API_USERNAME, UNBABEL_API_KEY)
 from hackernews import db
 
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379'),
@@ -22,7 +23,7 @@ celery = Celery('tasks',
 
 
 UNBABEL_HEADERS = {
-            "Authorization": "ApiKey gtv.almeida:63215095a2bef30abea459ef841c681000c5d28d",
+            "Authorization": "ApiKey {}:{}".format(UNBABEL_API_USERNAME, UNBABEL_API_KEY),
             "Content-Type": "application/json"
         }
 
