@@ -7,7 +7,7 @@ function configure_unbabel(){
     read api_username
     echo "Please, enter your Unbabel api key"
     read api_key
-    echo "[sandbox]" > "$CONFIGPATH"
+    echo "[Sandbox]" > "$CONFIGPATH"
     echo "UNBABEL_API_USERNAME=$api_username" >> "$CONFIGPATH"
     echo "UNBABEL_API_KEY=$api_key" >> "$CONFIGPATH"
     echo "Nice! Now you already to go ahead with Unbabel API!"
